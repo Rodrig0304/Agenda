@@ -1,0 +1,22 @@
+@(contactos: List[models.Contacto])
+@main("Gestión de Contactos") {
+
+    <h1>Lista de Contactos</h1>
+
+    <ul>
+        @for(contacto <- contactos) {
+            <li>
+                <strong>@contacto.getNombre()</strong> - @contacto.getEmail()
+            </li>
+        }
+    </ul>
+
+    <hr>
+
+    <h2>Crear nuevo contacto</h2>
+    <form action="/vista/contactos/crear" method="POST">
+        <label>Nombre: <input type="text" name="nombre" required></label><br>
+        <label>Email: <input type="email" name="email" required></label><br><br>
+        <button type="submit">Crear</button>
+    </form>
+}
