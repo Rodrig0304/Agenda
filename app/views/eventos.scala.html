@@ -1,0 +1,59 @@
+@(eventos: List[models.Evento])
+@main("Gestión de Eventos") {
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h1>📅 Lista de Eventos</h1>
+        
+        <!-- Botones de navegación -->
+        <div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
+            <h3>Navegación:</h3>
+            <a href="/vista/contactos" style="background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px;">📞 Contactos</a>
+            <a href="/vista/categorias" style="background-color: #28a745; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px;">📂 Categorías</a>
+            <a href="/vista/eventos" style="background-color: #ffc107; color: black; padding: 8px 16px; text-decoration: none; border-radius: 4px;">📅 Eventos</a>
+        </div>
+
+        <!-- Lista de eventos -->
+        <div style="margin-bottom: 30px;">
+            <h2>🎯 Eventos Registrados</h2>
+            @if(eventos.isEmpty()) {
+                <p style="color: #666; font-style: italic;">No hay eventos registrados aún.</p>
+            } else {
+                <ul style="list-style: none; padding: 0;">
+                    @for(evento <- eventos) {
+                        <li style="background-color: #f8f9fa; margin: 5px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107;">
+                            <strong>@evento.getTitulo()</strong><br>
+                            📝 @evento.getDescripcion()<br>
+                            📅 Fecha: @evento.getFecha()<br>
+                            🕒 Hora: @evento.getHora()
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <hr style="margin: 30px 0;"/>
+
+        <!-- Formulario para agregar evento -->
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <h2>➕ Agregar Nuevo Evento</h2>
+            <form method="POST" action="/vista/eventos/crear" style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Título:</label>
+                    <input type="text" name="titulo" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Descripción:</label>
+                    <textarea name="descripcion" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 80px; resize: vertical;"></textarea>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Fecha:</label>
+                    <input type="date" name="fecha" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Hora:</label>
+                    <input type="time" name="hora" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <button type="submit" style="background-color: #ffc107; color: black; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Crear Evento</button>
+            </form>
+        </div>
+    </div>
+} 

@@ -2,11 +2,20 @@ package models;
 
 public class Evento {
     private Long id;
-    private String nombre;
-    private String fecha; // o LocalDate si configuras JSON para fechas
-    private String lugar;
+    private String titulo;
+    private String descripcion;
+    private String fecha;
+    private String hora;
 
     public Evento() {}
+
+    public Evento(Long id, String titulo, String descripcion, String fecha, String hora) {
+        this.id = id;
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.fecha = fecha;
+        this.hora = hora;
+    }
 
     public Long getId() {
         return id;
@@ -14,11 +23,17 @@ public class Evento {
     public void setId(Long id) {
         this.id = id;
     }
-    public String getNombre() {
-        return nombre;
+    public String getTitulo() {
+        return titulo;
     }
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+    public String getDescripcion() {
+        return descripcion;
+    }
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
     public String getFecha() {
         return fecha;
@@ -26,10 +41,10 @@ public class Evento {
     public void setFecha(String fecha) {
         this.fecha = fecha;
     }
-    public String getLugar() {
-        return lugar;
+    public String getHora() {
+        return hora;
     }
-    public void setLugar(String lugar) {
-        this.lugar = lugar;
+    public void setHora(String hora) {
+        this.hora = hora;
     }
 }

@@ -1,7 +1,7 @@
-@(contactos: List[models.Contacto])
-@main("Gestión de Contactos") {
+@(categorias: List[models.Categoria])
+@main("Gestión de Categorías") {
     <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
-        <h1>📞 Lista de Contactos</h1>
+        <h1>📂 Lista de Categorías</h1>
         
         <!-- Botones de navegación -->
         <div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
@@ -11,16 +11,16 @@
             <a href="/vista/eventos" style="background-color: #ffc107; color: black; padding: 8px 16px; text-decoration: none; border-radius: 4px;">📅 Eventos</a>
         </div>
 
-        <!-- Lista de contactos -->
+        <!-- Lista de categorías -->
         <div style="margin-bottom: 30px;">
-            <h2>👥 Contactos Registrados</h2>
-            @if(contactos.isEmpty()) {
-                <p style="color: #666; font-style: italic;">No hay contactos registrados aún.</p>
+            <h2>📁 Categorías Registradas</h2>
+            @if(categorias.isEmpty()) {
+                <p style="color: #666; font-style: italic;">No hay categorías registradas aún.</p>
             } else {
                 <ul style="list-style: none; padding: 0;">
-                    @for(contacto <- contactos) {
-                        <li style="background-color: #f8f9fa; margin: 5px 0; padding: 10px; border-radius: 5px; border-left: 4px solid #007bff;">
-                            <strong>@contacto.getNombre()</strong> - 📧 @contacto.getEmail()
+                    @for(categoria <- categorias) {
+                        <li style="background-color: #f8f9fa; margin: 5px 0; padding: 10px; border-radius: 5px; border-left: 4px solid #28a745;">
+                            <strong>@categoria.getNombre()</strong> - 📝 @categoria.getDescripcion()
                         </li>
                     }
                 </ul>
@@ -29,20 +29,20 @@
 
         <hr style="margin: 30px 0;"/>
 
-        <!-- Formulario para agregar contacto -->
+        <!-- Formulario para agregar categoría -->
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
-            <h2>➕ Agregar Nuevo Contacto</h2>
-            <form method="POST" action="/vista/contactos/crear" style="display: flex; flex-direction: column; gap: 15px;">
+            <h2>➕ Agregar Nueva Categoría</h2>
+            <form method="POST" action="/vista/categorias/crear" style="display: flex; flex-direction: column; gap: 15px;">
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Nombre:</label>
                     <input type="text" name="nombre" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Email:</label>
-                    <input type="email" name="email" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Descripción:</label>
+                    <textarea name="descripcion" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 80px; resize: vertical;"></textarea>
                 </div>
-                <button type="submit" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Crear Contacto</button>
+                <button type="submit" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Crear Categoría</button>
             </form>
         </div>
     </div>
-}
+} 

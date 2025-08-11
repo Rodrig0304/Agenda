@@ -11,6 +11,12 @@ POST    /categorias        controllers.CategoriaController.crearCategoria(reques
 GET     /eventos          controllers.EventoController.listarEventos
 POST    /eventos          controllers.EventoController.crearEvento(request: play.mvc.Http.Request)
 
+GET     /vista/categorias           controllers.CategoriaController.vistaCategorias
+POST    /vista/categorias/crear     controllers.CategoriaController.crearDesdeFormulario(request: play.mvc.Http.Request)
+
+GET     /vista/eventos              controllers.EventoController.vistaEventos
+POST    /vista/eventos/crear        controllers.EventoController.crearDesdeFormulario(request: play.mvc.Http.Request)
+
 GET     /vista/contactos           controllers.ContactoController.vistaContactos
 POST    /vista/contactos/crear     controllers.ContactoController.crearDesdeFormulario(request: play.mvc.Http.Request)
 
