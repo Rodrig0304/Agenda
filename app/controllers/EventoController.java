@@ -3,6 +3,9 @@ package controllers;
 import play.mvc.*;
 import play.libs.Json;
 import models.Evento;
+import models.Categoria;
+import models.Contacto;
+import services.AgendaService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,28 +13,32 @@ import java.util.Map;
 
 public class EventoController extends Controller {
 
-    private static List<Evento> eventos = new ArrayList<>();
-    private static Long contadorId = 1L;
-
-    // Devuelve los eventos en formato JSON
     public Result listarEventos() {
+        List<Evento> eventos = AgendaService.obtenerTodosLosEventos();
         return ok(Json.toJson(eventos));
     }
 
-    // Crea un evento desde JSON
     public Result crearEvento(Http.Request request) {
         Evento evento = Json.fromJson(request.body().asJson(), Evento.class);
-        evento.setId(contadorId++);
-        eventos.add(evento);
-        return created(Json.toJson(evento));
+        Long categoriaId = null;
+        
+        // Extraer categoriaId del JSON si existe
+        if (request.body().asJson().has("categoriaId") && !request.body().asJson().get("categoriaId").isNull()) {
+            categoriaId = request.body().asJson().get("categoriaId").asLong();
+        }
+        
+        Evento nuevoEvento = AgendaService.crearEvento(evento.getTitulo(), evento.getDescripcion(), 
+                                                     evento.getFecha(), evento.getHora(), categoriaId);
+        return created(Json.toJson(nuevoEvento));
     }
 
-    // Muestra la vista HTML con la lista de eventos y el formulario
     public Result vistaEventos() {
-        return ok(views.html.eventos.render(eventos));
+        List<Evento> eventos = AgendaService.obtenerTodosLosEventos();
+        List<Categoria> categorias = AgendaService.obtenerTodasLasCategorias();
+        List<Contacto> contactos = AgendaService.obtenerTodosLosContactos();
+        return ok(views.html.eventos.render(eventos, categorias, contactos));
     }
 
-    // Crea un evento desde el formulario HTML
     public Result crearDesdeFormulario(Http.Request request) {
         Map<String, String[]> formData = request.body().asFormUrlEncoded();
         if (formData != null && formData.get("titulo") != null && formData.get("descripcion") != null && 
@@ -40,11 +47,169 @@ public class EventoController extends Controller {
             String descripcion = formData.get("descripcion")[0];
             String fecha = formData.get("fecha")[0];
             String hora = formData.get("hora")[0];
+            Long categoriaId = null;
+            
+            if (formData.get("categoriaId") != null && !formData.get("categoriaId")[0].isEmpty()) {
+                try {
+                    categoriaId = Long.parseLong(formData.get("categoriaId")[0]);
+                } catch (NumberFormatException e) {
+                    // Si no se puede parsear, se deja como null
+                }
+            }
+            
             if (titulo != null && !titulo.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty() &&
                 fecha != null && !fecha.trim().isEmpty() && hora != null && !hora.trim().isEmpty()) {
-                eventos.add(new Evento(contadorId++, titulo, descripcion, fecha, hora));
+                AgendaService.crearEvento(titulo, descripcion, fecha, hora, categoriaId);
             }
         }
         return redirect("/vista/eventos");
+    }
+
+    // Manejar peticiones POST con ID (para borrar y actualizar)
+    public Result manejarPeticionConId(Long id, Http.Request request) {
+        Map<String, String[]> formData = request.body().asFormUrlEncoded();
+        if (formData != null && formData.get("_method") != null) {
+            String method = formData.get("_method")[0];
+            if (method.equals("DELETE")) {
+                // Es una petición de borrado
+                AgendaService.eliminarEvento(id);
+            } else if (method.equals("PUT")) {
+                // Es una petición de actualización
+                if (formData.get("titulo") != null && formData.get("descripcion") != null && 
+                    formData.get("fecha") != null && formData.get("hora") != null) {
+                    String titulo = formData.get("titulo")[0];
+                    String descripcion = formData.get("descripcion")[0];
+                    String fecha = formData.get("fecha")[0];
+                    String hora = formData.get("hora")[0];
+                    Long categoriaId = null;
+                    
+                    if (formData.get("categoriaId") != null && !formData.get("categoriaId")[0].isEmpty()) {
+                        try {
+                            categoriaId = Long.parseLong(formData.get("categoriaId")[0]);
+                        } catch (NumberFormatException e) {
+                            // Si no se puede parsear, se deja como null
+                        }
+                    }
+                    
+                    if (titulo != null && !titulo.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty() &&
+                        fecha != null && !fecha.trim().isEmpty() && hora != null && !hora.trim().isEmpty()) {
+                        AgendaService.actualizarEvento(id, titulo, descripcion, fecha, hora, categoriaId);
+                    }
+                }
+            }
+        }
+        return redirect("/vista/eventos");
+    }
+
+    // Borrar evento por ID
+    public Result borrarEvento(Long id) {
+        AgendaService.eliminarEvento(id);
+        return redirect("/vista/eventos");
+    }
+
+    // Actualizar evento por ID
+    public Result actualizarEvento(Long id, Http.Request request) {
+        Map<String, String[]> formData = request.body().asFormUrlEncoded();
+        if (formData != null && formData.get("titulo") != null && formData.get("descripcion") != null && 
+            formData.get("fecha") != null && formData.get("hora") != null) {
+            String titulo = formData.get("titulo")[0];
+            String descripcion = formData.get("descripcion")[0];
+            String fecha = formData.get("fecha")[0];
+            String hora = formData.get("hora")[0];
+            Long categoriaId = null;
+            
+            if (formData.get("categoriaId") != null && !formData.get("categoriaId")[0].isEmpty()) {
+                try {
+                    categoriaId = Long.parseLong(formData.get("categoriaId")[0]);
+                } catch (NumberFormatException e) {
+                    // Si no se puede parsear, se deja como null
+                }
+            }
+            
+            if (titulo != null && !titulo.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty() &&
+                fecha != null && !fecha.trim().isEmpty() && hora != null && !hora.trim().isEmpty()) {
+                AgendaService.actualizarEvento(id, titulo, descripcion, fecha, hora, categoriaId);
+            }
+        }
+        return redirect("/vista/eventos");
+    }
+
+    // Nuevos métodos para relaciones
+    public Result obtenerEventosPorCategoria(Long categoriaId) {
+        List<Evento> eventos = AgendaService.obtenerEventosPorCategoria(categoriaId);
+        return ok(Json.toJson(eventos));
+    }
+
+    public Result obtenerEventosConParticipantes() {
+        List<Evento> eventos = AgendaService.obtenerEventosConParticipantes();
+        return ok(Json.toJson(eventos));
+    }
+
+    public Result agregarParticipante(Long eventoId, Long contactoId) {
+        boolean resultado = AgendaService.agregarParticipanteAEvento(eventoId, contactoId);
+        if (resultado) {
+            return ok(Json.toJson("Participante agregado exitosamente"));
+        } else {
+            return badRequest(Json.toJson("Error al agregar participante"));
+        }
+    }
+
+    public Result removerParticipante(Long eventoId, Long contactoId) {
+        boolean resultado = AgendaService.removerParticipanteDeEvento(eventoId, contactoId);
+        if (resultado) {
+            return ok(Json.toJson("Participante removido exitosamente"));
+        } else {
+            return badRequest(Json.toJson("Error al remover participante"));
+        }
+    }
+
+    public Result obtenerParticipantesDelEvento(Long eventoId) {
+        List<Contacto> participantes = AgendaService.obtenerParticipantesDelEvento(eventoId);
+        
+        // Crear una lista de objetos simples para evitar referencias circulares
+        List<Object> participantesSimples = new ArrayList<>();
+        for (Contacto contacto : participantes) {
+            participantesSimples.add(new Object() {
+                public Long id = contacto.getId();
+                public String nombre = contacto.getNombre();
+                public String email = contacto.getEmail();
+            });
+        }
+        
+        return ok(Json.toJson(participantesSimples));
+    }
+
+    // Método de debug para probar participantes
+    public Result debugParticipantes(Long eventoId) {
+        try {
+            Evento evento = AgendaService.obtenerEventoPorId(eventoId);
+            if (evento == null) {
+                return badRequest(Json.toJson("Evento no encontrado"));
+            }
+            
+            // Crear un objeto simple para evitar problemas de serialización
+            return ok(Json.toJson(new Object() {
+                public Long eventoId = evento.getId();
+                public String titulo = evento.getTitulo();
+                public int cantidadParticipantes = evento.getParticipantes() != null ? evento.getParticipantes().size() : 0;
+                public String mensaje = "Debug exitoso";
+            }));
+            
+        } catch (Exception e) {
+            return internalServerError(Json.toJson("Error interno: " + e.getMessage()));
+        }
+    }
+
+    // Método de prueba simple
+    public Result testSimple() {
+        return ok(Json.toJson("Test simple funcionando"));
+    }
+
+    // Clase interna para debug
+    public static class DebugInfo {
+        public Long eventoId;
+        public String titulo;
+        public int cantidadParticipantes;
+        public List<Contacto> participantes;
     }
 }

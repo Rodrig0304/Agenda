@@ -2,21 +2,51 @@ GET     /                 controllers.HomeController.index
 
 GET     /assets/*file       controllers.Assets.versioned(path="/public", file: Asset)
 
+# Rutas para Contactos
 GET     /contactos         controllers.ContactoController.listarContactos
 POST    /contactos         controllers.ContactoController.crearContacto(request: play.mvc.Http.Request)
+GET     /contactos/categoria/:id    controllers.ContactoController.obtenerContactosPorCategoria(id: Long)
+GET     /contactos/sin-categoria    controllers.ContactoController.obtenerContactosSinCategoria
 
+# Rutas para Categorías
 GET     /categorias        controllers.CategoriaController.listarCategorias
 POST    /categorias        controllers.CategoriaController.crearCategoria(request: play.mvc.Http.Request)
+GET     /categorias/estadisticas    controllers.CategoriaController.obtenerCategoriasConEstadisticas
+GET     /categorias/:id/contactos   controllers.CategoriaController.obtenerContactosPorCategoria(id: Long)
+GET     /categorias/:id/eventos     controllers.CategoriaController.obtenerEventosPorCategoria(id: Long)
 
+# Rutas para Eventos
 GET     /eventos          controllers.EventoController.listarEventos
 POST    /eventos          controllers.EventoController.crearEvento(request: play.mvc.Http.Request)
+GET     /eventos/categoria/:id      controllers.EventoController.obtenerEventosPorCategoria(id: Long)
+GET     /eventos/con-participantes  controllers.EventoController.obtenerEventosConParticipantes
+GET     /eventos/:id/participantes  controllers.EventoController.obtenerParticipantesDelEvento(id: Long)
+POST    /eventos/:id/participantes/:contactoId  controllers.EventoController.agregarParticipante(id: Long, contactoId: Long)
+DELETE  /eventos/:id/participantes/:contactoId  controllers.EventoController.removerParticipante(id: Long, contactoId: Long)
+GET     /eventos/:id/debug           controllers.EventoController.debugParticipantes(id: Long)
+GET     /test-simple                 controllers.EventoController.testSimple
 
+# Rutas para Relaciones
+GET     /relaciones/resumen           controllers.RelacionController.obtenerResumenAgenda
+GET     /relaciones/categoria/:id     controllers.RelacionController.obtenerEstadisticasCategoria(id: Long)
+GET     /relaciones/categoria/:id/contactos  controllers.RelacionController.obtenerContactosDeCategoria(id: Long)
+GET     /relaciones/categoria/:id/eventos    controllers.RelacionController.obtenerEventosDeCategoria(id: Long)
+GET     /relaciones/evento/:id/participantes controllers.RelacionController.obtenerParticipantesDeEvento(id: Long)
+POST    /relaciones/evento/:id/participantes/:contactoId  controllers.RelacionController.agregarParticipanteAEvento(id: Long, contactoId: Long)
+DELETE  /relaciones/evento/:id/participantes/:contactoId  controllers.RelacionController.removerParticipanteDeEvento(id: Long, contactoId: Long)
+GET     /relaciones/eventos/fecha/:fecha     controllers.RelacionController.obtenerEventosPorFecha(fecha: String)
+GET     /relaciones/contactos/buscar/:nombre controllers.RelacionController.buscarContactosPorNombre(nombre: String)
+
+# Rutas para Vistas
 GET     /vista/categorias           controllers.CategoriaController.vistaCategorias
 POST    /vista/categorias/crear     controllers.CategoriaController.crearDesdeFormulario(request: play.mvc.Http.Request)
+POST    /vista/categorias/:id       controllers.CategoriaController.manejarPeticionConId(id: Long, request: play.mvc.Http.Request)
 
 GET     /vista/eventos              controllers.EventoController.vistaEventos
 POST    /vista/eventos/crear        controllers.EventoController.crearDesdeFormulario(request: play.mvc.Http.Request)
+POST    /vista/eventos/:id          controllers.EventoController.manejarPeticionConId(id: Long, request: play.mvc.Http.Request)
 
 GET     /vista/contactos           controllers.ContactoController.vistaContactos
 POST    /vista/contactos/crear     controllers.ContactoController.crearDesdeFormulario(request: play.mvc.Http.Request)
+POST    /vista/contactos/:id       controllers.ContactoController.manejarPeticionConId(id: Long, request: play.mvc.Http.Request)
 

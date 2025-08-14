@@ -1,9 +1,8 @@
-@(eventos: List[models.Evento])
+@(eventos: List[models.Evento], categorias: List[models.Categoria], contactos: List[models.Contacto])
 @main("Gestión de Eventos") {
     <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
         <h1>📅 Lista de Eventos</h1>
         
-        <!-- Botones de navegación -->
         <div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
             <h3>Navegación:</h3>
             <a href="/vista/contactos" style="background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px;">📞 Contactos</a>
@@ -11,7 +10,6 @@
             <a href="/vista/eventos" style="background-color: #ffc107; color: black; padding: 8px 16px; text-decoration: none; border-radius: 4px;">📅 Eventos</a>
         </div>
 
-        <!-- Lista de eventos -->
         <div style="margin-bottom: 30px;">
             <h2>🎯 Eventos Registrados</h2>
             @if(eventos.isEmpty()) {
@@ -19,11 +17,29 @@
             } else {
                 <ul style="list-style: none; padding: 0;">
                     @for(evento <- eventos) {
-                        <li style="background-color: #f8f9fa; margin: 5px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107;">
-                            <strong>@evento.getTitulo()</strong><br>
-                            📝 @evento.getDescripcion()<br>
-                            📅 Fecha: @evento.getFecha()<br>
-                            🕒 Hora: @evento.getHora()
+                        <li style="background-color: #f8f9fa; margin: 5px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>@evento.getTitulo()</strong><br>
+                                📝 @evento.getDescripcion()<br>
+                                📅 Fecha: @evento.getFecha()<br>
+                                🕒 Hora: @evento.getHora()
+                                @if(evento.getCategoria() != null) {
+                                    <br>📂 Categoría: @evento.getCategoria().getNombre()
+                                } else {
+                                    <br><small style="color: #999;">📂 Sin categoría</small>
+                                }
+                                @if(!evento.getParticipantes().isEmpty()) {
+                                    <br>👥 Participantes: @evento.getParticipantes().size() persona(s)
+                                }
+                            </div>
+                            <div style="display: flex; gap: 5px;">
+                                <button onclick="editarEvento(@evento.getId(), '@evento.getTitulo()', '@evento.getDescripcion()', '@evento.getFecha()', '@evento.getHora()', @if(evento.getCategoria() != null) {@evento.getCategoria().getId()} else {null})" style="background-color: #ffc107; color: black; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">✏️ Editar</button>
+                                <button onclick="gestionarParticipantes(@evento.getId())" style="background-color: #17a2b8; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">👥 Participantes</button>
+                                <form method="POST" action="/vista/eventos/@evento.getId()" style="margin: 0;">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" style="background-color: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="return confirm('¿Estás seguro de que quieres borrar este evento?')">🗑️ Borrar</button>
+                                </form>
+                            </div>
                         </li>
                     }
                 </ul>
@@ -32,7 +48,6 @@
 
         <hr style="margin: 30px 0;"/>
 
-        <!-- Formulario para agregar evento -->
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
             <h2>➕ Agregar Nuevo Evento</h2>
             <form method="POST" action="/vista/eventos/crear" style="display: flex; flex-direction: column; gap: 15px;">
@@ -52,8 +67,216 @@
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Hora:</label>
                     <input type="time" name="hora" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Categoría (opcional):</label>
+                    <select name="categoriaId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">Sin categoría</option>
+                        @for(categoria <- categorias) {
+                            <option value="@categoria.getId()">@categoria.getNombre()</option>
+                        }
+                    </select>
+                </div>
                 <button type="submit" style="background-color: #ffc107; color: black; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">Crear Evento</button>
             </form>
         </div>
     </div>
+
+    <!-- Modal para editar evento -->
+    <div id="modalEditar" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto; padding: 20px; box-sizing: border-box;">
+        <div style="background-color: white; margin: 20px auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; position: relative;">
+            <h2>✏️ Editar Evento</h2>
+            <form id="formEditar" method="POST" style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="hidden" name="_method" value="PUT">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Título:</label>
+                    <input type="text" id="editTitulo" name="titulo" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Descripción:</label>
+                    <textarea id="editDescripcion" name="descripcion" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 60px; resize: vertical; box-sizing: border-box;"></textarea>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Fecha:</label>
+                    <input type="date" id="editFecha" name="fecha" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Hora:</label>
+                    <input type="time" id="editHora" name="hora" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Categoría:</label>
+                    <select id="editCategoria" name="categoriaId" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                        <option value="">Sin categoría</option>
+                        @for(categoria <- categorias) {
+                            <option value="@categoria.getId()">@categoria.getNombre()</option>
+                        }
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                    <button type="button" onclick="cerrarModal()" style="background-color: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                    <button type="submit" style="background-color: #ffc107; color: black; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para gestionar participantes -->
+    <div id="modalParticipantes" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto; padding: 20px; box-sizing: border-box;">
+        <div style="background-color: white; margin: 20px auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative;">
+            <h2>👥 Gestionar Participantes</h2>
+            <div id="participantesActuales" style="margin-bottom: 20px;">
+                <h3>Participantes actuales:</h3>
+                <div id="listaParticipantes"></div>
+            </div>
+            <div>
+                <h3>Agregar participante:</h3>
+                <select id="selectContacto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;">
+                    <option value="">Seleccionar contacto...</option>
+                    @for(contacto <- contactos) {
+                        <option value="@contacto.getId()">@contacto.getNombre() - @contacto.getEmail()</option>
+                    }
+                </select>
+                <button onclick="agregarParticipante()" style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Agregar Participante</button>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="cerrarModalParticipantes()" style="background-color: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventoActualId = null;
+
+        function editarEvento(id, titulo, descripcion, fecha, hora, categoriaId) {
+            document.getElementById('editTitulo').value = titulo;
+            document.getElementById('editDescripcion').value = descripcion;
+            document.getElementById('editFecha').value = fecha;
+            document.getElementById('editHora').value = hora;
+            if (categoriaId) {
+                document.getElementById('editCategoria').value = categoriaId;
+            } else {
+                document.getElementById('editCategoria').value = '';
+            }
+            document.getElementById('formEditar').action = '/vista/eventos/' + id;
+            document.getElementById('modalEditar').style.display = 'block';
+        }
+
+        function gestionarParticipantes(eventoId) {
+            eventoActualId = eventoId;
+            cargarParticipantes(eventoId);
+            document.getElementById('modalParticipantes').style.display = 'block';
+        }
+
+        function cargarParticipantes(eventoId) {
+            console.log('Cargando participantes para evento:', eventoId);
+            
+            // Usar el endpoint de participantes directamente
+            fetch('/eventos/' + eventoId + '/participantes')
+                .then(response => {
+                    console.log('Participantes response status:', response.status);
+                    
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.log('Error response text:', text);
+                            throw new Error('Error al cargar participantes: ' + response.status + ' - ' + text);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(participantes => {
+                    console.log('Participantes:', participantes);
+                    const lista = document.getElementById('listaParticipantes');
+                    
+                    if (participantes.length === 0) {
+                        lista.innerHTML = '<p style="color: #666; font-style: italic;">No hay participantes registrados para este evento.</p>';
+                    } else {
+                        lista.innerHTML = participantes.map(p => 
+                            `<div style="background-color: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                <span><strong>${p.nombre}</strong> - 📧 ${p.email}</span>
+                                <button onclick="removerParticipante(${p.id})" style="background-color: #dc3545; color: white; padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️ Remover</button>
+                            </div>`
+                        ).join('');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar participantes:', error);
+                    document.getElementById('listaParticipantes').innerHTML = '<p style="color: #dc3545;">Error al cargar participantes: ' + error.message + '</p>';
+                });
+        }
+
+        function agregarParticipante() {
+            const contactoId = document.getElementById('selectContacto').value;
+            if (!contactoId) {
+                alert('Por favor selecciona un contacto');
+                return;
+            }
+
+            fetch('/eventos/' + eventoActualId + '/participantes/' + contactoId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(result => {
+                alert('Participante agregado exitosamente');
+                cargarParticipantes(eventoActualId);
+                document.getElementById('selectContacto').value = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar participante: ' + error.message);
+            });
+        }
+
+        function removerParticipante(contactoId) {
+            if (confirm('¿Estás seguro de que quieres remover este participante?')) {
+                fetch('/eventos/' + eventoActualId + '/participantes/' + contactoId, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(result => {
+                    alert('Participante removido exitosamente');
+                    cargarParticipantes(eventoActualId);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al remover participante: ' + error.message);
+                });
+            }
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalEditar').style.display = 'none';
+        }
+
+        function cerrarModalParticipantes() {
+            document.getElementById('modalParticipantes').style.display = 'none';
+        }
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.onclick = function(event) {
+            var modalEditar = document.getElementById('modalEditar');
+            var modalParticipantes = document.getElementById('modalParticipantes');
+            if (event.target == modalEditar) {
+                modalEditar.style.display = 'none';
+            }
+            if (event.target == modalParticipantes) {
+                modalParticipantes.style.display = 'none';
+            }
+        }
+    </script>
 } 

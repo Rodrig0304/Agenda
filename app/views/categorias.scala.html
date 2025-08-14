@@ -3,7 +3,7 @@
     <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
         <h1>📂 Lista de Categorías</h1>
         
-        <!-- Botones de navegación -->
+      
         <div style="margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
             <h3>Navegación:</h3>
             <a href="/vista/contactos" style="background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px;">📞 Contactos</a>
@@ -11,7 +11,7 @@
             <a href="/vista/eventos" style="background-color: #ffc107; color: black; padding: 8px 16px; text-decoration: none; border-radius: 4px;">📅 Eventos</a>
         </div>
 
-        <!-- Lista de categorías -->
+
         <div style="margin-bottom: 30px;">
             <h2>📁 Categorías Registradas</h2>
             @if(categorias.isEmpty()) {
@@ -19,8 +19,17 @@
             } else {
                 <ul style="list-style: none; padding: 0;">
                     @for(categoria <- categorias) {
-                        <li style="background-color: #f8f9fa; margin: 5px 0; padding: 10px; border-radius: 5px; border-left: 4px solid #28a745;">
-                            <strong>@categoria.getNombre()</strong> - 📝 @categoria.getDescripcion()
+                        <li style="background-color: #f8f9fa; margin: 5px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>@categoria.getNombre()</strong> - 📝 @categoria.getDescripcion()
+                            </div>
+                            <div style="display: flex; gap: 5px;">
+                                <button onclick="editarCategoria(@categoria.getId(), '@categoria.getNombre()', '@categoria.getDescripcion()')" style="background-color: #ffc107; color: black; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">✏️ Editar</button>
+                                <form method="POST" action="/vista/categorias/@categoria.getId()" style="margin: 0;">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" style="background-color: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;" onclick="return confirm('¿Estás seguro de que quieres borrar esta categoría?')">🗑️ Borrar</button>
+                                </form>
+                            </div>
                         </li>
                     }
                 </ul>
@@ -29,7 +38,6 @@
 
         <hr style="margin: 30px 0;"/>
 
-        <!-- Formulario para agregar categoría -->
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
             <h2>➕ Agregar Nueva Categoría</h2>
             <form method="POST" action="/vista/categorias/crear" style="display: flex; flex-direction: column; gap: 15px;">
@@ -45,4 +53,47 @@
             </form>
         </div>
     </div>
+
+    <!-- Modal para editar categoría -->
+    <div id="modalEditar" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+        <div style="background-color: white; margin: 15% auto; padding: 20px; border-radius: 8px; width: 80%; max-width: 500px;">
+            <h2>✏️ Editar Categoría</h2>
+            <form id="formEditar" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+                <input type="hidden" name="_method" value="PUT">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Nombre:</label>
+                    <input type="text" id="editNombre" name="nombre" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Descripción:</label>
+                    <textarea id="editDescripcion" name="descripcion" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; height: 80px; resize: vertical;"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="cerrarModal()" style="background-color: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                    <button type="submit" style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function editarCategoria(id, nombre, descripcion) {
+            document.getElementById('editNombre').value = nombre;
+            document.getElementById('editDescripcion').value = descripcion;
+            document.getElementById('formEditar').action = '/vista/categorias/' + id;
+            document.getElementById('modalEditar').style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalEditar').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer clic fuera de él
+        window.onclick = function(event) {
+            var modal = document.getElementById('modalEditar');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
 } 

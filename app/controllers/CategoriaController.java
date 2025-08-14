@@ -3,44 +3,95 @@ package controllers;
 import play.mvc.*;
 import play.libs.Json;
 import models.Categoria;
+import services.AgendaService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class CategoriaController extends Controller {
 
-    private static List<Categoria> categorias = new ArrayList<>();
-    private static Long contadorId = 1L;
-
-    // Devuelve las categorías en formato JSON
     public Result listarCategorias() {
+        List<Categoria> categorias = AgendaService.obtenerTodasLasCategorias();
         return ok(Json.toJson(categorias));
     }
 
-    // Crea una categoría desde JSON
     public Result crearCategoria(Http.Request request) {
         Categoria categoria = Json.fromJson(request.body().asJson(), Categoria.class);
-        categoria.setId(contadorId++);
-        categorias.add(categoria);
-        return created(Json.toJson(categoria));
+        Categoria nuevaCategoria = AgendaService.crearCategoria(categoria.getNombre(), categoria.getDescripcion());
+        return created(Json.toJson(nuevaCategoria));
     }
 
-    // Muestra la vista HTML con la lista de categorías y el formulario
     public Result vistaCategorias() {
+        List<Categoria> categorias = AgendaService.obtenerTodasLasCategorias();
         return ok(views.html.categorias.render(categorias));
     }
 
-    // Crea una categoría desde el formulario HTML
     public Result crearDesdeFormulario(Http.Request request) {
         Map<String, String[]> formData = request.body().asFormUrlEncoded();
         if (formData != null && formData.get("nombre") != null && formData.get("descripcion") != null) {
             String nombre = formData.get("nombre")[0];
             String descripcion = formData.get("descripcion")[0];
             if (nombre != null && !nombre.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty()) {
-                categorias.add(new Categoria(contadorId++, nombre, descripcion));
+                AgendaService.crearCategoria(nombre, descripcion);
             }
         }
         return redirect("/vista/categorias");
+    }
+
+    // Manejar peticiones POST con ID (para borrar y actualizar)
+    public Result manejarPeticionConId(Long id, Http.Request request) {
+        Map<String, String[]> formData = request.body().asFormUrlEncoded();
+        if (formData != null && formData.get("_method") != null) {
+            String method = formData.get("_method")[0];
+            if (method.equals("DELETE")) {
+                // Es una petición de borrado
+                AgendaService.eliminarCategoria(id);
+            } else if (method.equals("PUT")) {
+                // Es una petición de actualización
+                if (formData.get("nombre") != null && formData.get("descripcion") != null) {
+                    String nombre = formData.get("nombre")[0];
+                    String descripcion = formData.get("descripcion")[0];
+                    if (nombre != null && !nombre.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty()) {
+                        AgendaService.actualizarCategoria(id, nombre, descripcion);
+                    }
+                }
+            }
+        }
+        return redirect("/vista/categorias");
+    }
+
+    // Borrar categoría por ID
+    public Result borrarCategoria(Long id) {
+        AgendaService.eliminarCategoria(id);
+        return redirect("/vista/categorias");
+    }
+
+    // Actualizar categoría por ID
+    public Result actualizarCategoria(Long id, Http.Request request) {
+        Map<String, String[]> formData = request.body().asFormUrlEncoded();
+        if (formData != null && formData.get("nombre") != null && formData.get("descripcion") != null) {
+            String nombre = formData.get("nombre")[0];
+            String descripcion = formData.get("descripcion")[0];
+            if (nombre != null && !nombre.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty()) {
+                AgendaService.actualizarCategoria(id, nombre, descripcion);
+            }
+        }
+        return redirect("/vista/categorias");
+    }
+
+    // Nuevos métodos para relaciones
+    public Result obtenerCategoriasConEstadisticas() {
+        List<Categoria> categorias = AgendaService.obtenerCategoriasConEstadisticas();
+        return ok(Json.toJson(categorias));
+    }
+
+    public Result obtenerContactosPorCategoria(Long categoriaId) {
+        List<models.Contacto> contactos = AgendaService.obtenerContactosPorCategoria(categoriaId);
+        return ok(Json.toJson(contactos));
+    }
+
+    public Result obtenerEventosPorCategoria(Long categoriaId) {
+        List<models.Evento> eventos = AgendaService.obtenerEventosPorCategoria(categoriaId);
+        return ok(Json.toJson(eventos));
     }
 }
