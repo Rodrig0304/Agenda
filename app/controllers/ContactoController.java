@@ -5,14 +5,17 @@ import com.fasterxml.jackson.databind.JsonNode;
 import play.libs.Json;
 import models.Contacto;
 import models.Categoria;
-import services.AgendaService;
+import services.DatabaseService;
+
 
 import java.util.*;
 
 public class ContactoController extends Controller {
 
+
+
     public Result listarContactos() {
-        List<Contacto> contactos = AgendaService.obtenerTodosLosContactos();
+        List<Contacto> contactos = DatabaseService.obtenerTodosLosContactos();
         return ok(Json.toJson(contactos));
     }
 
@@ -27,13 +30,13 @@ public class ContactoController extends Controller {
         String email = json.get("email").asText();
         Long categoriaId = json.get("categoriaId") != null ? json.get("categoriaId").asLong() : null;
 
-        Contacto nuevo = AgendaService.crearContacto(nombre, email, categoriaId);
+        Contacto nuevo = DatabaseService.crearContacto(nombre, email, categoriaId);
         return created(Json.toJson(nuevo));
     }
 
     public Result vistaContactos() {
-        List<Contacto> contactos = AgendaService.obtenerTodosLosContactos();
-        List<Categoria> categorias = AgendaService.obtenerTodasLasCategorias();
+        List<Contacto> contactos = DatabaseService.obtenerTodosLosContactos();
+        List<Categoria> categorias = DatabaseService.obtenerTodasLasCategorias();
         return ok(views.html.contactos.render(contactos, categorias));
     }
 
@@ -52,7 +55,7 @@ public class ContactoController extends Controller {
                 }
             }
             
-            AgendaService.crearContacto(nombre, email, categoriaId);
+            DatabaseService.crearContacto(nombre, email, categoriaId);
         }
         return redirect("/vista/contactos");
     }
@@ -64,7 +67,7 @@ public class ContactoController extends Controller {
             String method = formData.get("_method")[0];
             if (method.equals("DELETE")) {
                 // Es una petición de borrado
-                AgendaService.eliminarContacto(id);
+                DatabaseService.eliminarContacto(id);
             } else if (method.equals("PUT")) {
                 // Es una petición de actualización
                 if (formData.get("nombre") != null && formData.get("email") != null) {
@@ -81,7 +84,7 @@ public class ContactoController extends Controller {
                     }
                     
                     if (nombre != null && !nombre.trim().isEmpty() && email != null && !email.trim().isEmpty()) {
-                        AgendaService.actualizarContacto(id, nombre, email, categoriaId);
+                        DatabaseService.actualizarContacto(id, nombre, email, categoriaId);
                     }
                 }
             }
@@ -91,7 +94,7 @@ public class ContactoController extends Controller {
 
     // Borrar contacto por ID
     public Result borrarContacto(Long id) {
-        AgendaService.eliminarContacto(id);
+        DatabaseService.eliminarContacto(id);
         return redirect("/vista/contactos");
     }
 
@@ -112,7 +115,7 @@ public class ContactoController extends Controller {
             }
             
             if (nombre != null && !nombre.trim().isEmpty() && email != null && !email.trim().isEmpty()) {
-                AgendaService.actualizarContacto(id, nombre, email, categoriaId);
+                DatabaseService.actualizarContacto(id, nombre, email, categoriaId);
             }
         }
         return redirect("/vista/contactos");
@@ -120,12 +123,12 @@ public class ContactoController extends Controller {
 
     // Nuevos métodos para relaciones
     public Result obtenerContactosPorCategoria(Long categoriaId) {
-        List<Contacto> contactos = AgendaService.obtenerContactosPorCategoria(categoriaId);
+        List<Contacto> contactos = DatabaseService.obtenerContactosPorCategoria(categoriaId);
         return ok(Json.toJson(contactos));
     }
 
     public Result obtenerContactosSinCategoria() {
-        List<Contacto> contactos = AgendaService.obtenerContactosSinCategoria();
+        List<Contacto> contactos = DatabaseService.obtenerContactosSinCategoria();
         return ok(Json.toJson(contactos));
     }
 }

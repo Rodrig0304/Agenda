@@ -3,26 +3,29 @@ package controllers;
 import play.mvc.*;
 import play.libs.Json;
 import models.Categoria;
-import services.AgendaService;
+import services.DatabaseService;
+
 
 import java.util.List;
 import java.util.Map;
 
 public class CategoriaController extends Controller {
 
+
+
     public Result listarCategorias() {
-        List<Categoria> categorias = AgendaService.obtenerTodasLasCategorias();
+        List<Categoria> categorias = DatabaseService.obtenerTodasLasCategorias();
         return ok(Json.toJson(categorias));
     }
 
     public Result crearCategoria(Http.Request request) {
         Categoria categoria = Json.fromJson(request.body().asJson(), Categoria.class);
-        Categoria nuevaCategoria = AgendaService.crearCategoria(categoria.getNombre(), categoria.getDescripcion());
+        Categoria nuevaCategoria = DatabaseService.crearCategoria(categoria.getNombre(), categoria.getDescripcion());
         return created(Json.toJson(nuevaCategoria));
     }
 
     public Result vistaCategorias() {
-        List<Categoria> categorias = AgendaService.obtenerTodasLasCategorias();
+        List<Categoria> categorias = DatabaseService.obtenerTodasLasCategorias();
         return ok(views.html.categorias.render(categorias));
     }
 
@@ -32,7 +35,7 @@ public class CategoriaController extends Controller {
             String nombre = formData.get("nombre")[0];
             String descripcion = formData.get("descripcion")[0];
             if (nombre != null && !nombre.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty()) {
-                AgendaService.crearCategoria(nombre, descripcion);
+                DatabaseService.crearCategoria(nombre, descripcion);
             }
         }
         return redirect("/vista/categorias");
@@ -45,14 +48,14 @@ public class CategoriaController extends Controller {
             String method = formData.get("_method")[0];
             if (method.equals("DELETE")) {
                 // Es una petición de borrado
-                AgendaService.eliminarCategoria(id);
+                DatabaseService.eliminarCategoria(id);
             } else if (method.equals("PUT")) {
                 // Es una petición de actualización
                 if (formData.get("nombre") != null && formData.get("descripcion") != null) {
                     String nombre = formData.get("nombre")[0];
                     String descripcion = formData.get("descripcion")[0];
                     if (nombre != null && !nombre.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty()) {
-                        AgendaService.actualizarCategoria(id, nombre, descripcion);
+                        DatabaseService.actualizarCategoria(id, nombre, descripcion);
                     }
                 }
             }
@@ -62,7 +65,7 @@ public class CategoriaController extends Controller {
 
     // Borrar categoría por ID
     public Result borrarCategoria(Long id) {
-        AgendaService.eliminarCategoria(id);
+        DatabaseService.eliminarCategoria(id);
         return redirect("/vista/categorias");
     }
 
@@ -73,7 +76,7 @@ public class CategoriaController extends Controller {
             String nombre = formData.get("nombre")[0];
             String descripcion = formData.get("descripcion")[0];
             if (nombre != null && !nombre.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty()) {
-                AgendaService.actualizarCategoria(id, nombre, descripcion);
+                DatabaseService.actualizarCategoria(id, nombre, descripcion);
             }
         }
         return redirect("/vista/categorias");
@@ -81,17 +84,17 @@ public class CategoriaController extends Controller {
 
     // Nuevos métodos para relaciones
     public Result obtenerCategoriasConEstadisticas() {
-        List<Categoria> categorias = AgendaService.obtenerCategoriasConEstadisticas();
+        List<Categoria> categorias = DatabaseService.obtenerCategoriasConEstadisticas();
         return ok(Json.toJson(categorias));
     }
 
     public Result obtenerContactosPorCategoria(Long categoriaId) {
-        List<models.Contacto> contactos = AgendaService.obtenerContactosPorCategoria(categoriaId);
+        List<models.Contacto> contactos = DatabaseService.obtenerContactosPorCategoria(categoriaId);
         return ok(Json.toJson(contactos));
     }
 
     public Result obtenerEventosPorCategoria(Long categoriaId) {
-        List<models.Evento> eventos = AgendaService.obtenerEventosPorCategoria(categoriaId);
+        List<models.Evento> eventos = DatabaseService.obtenerEventosPorCategoria(categoriaId);
         return ok(Json.toJson(eventos));
     }
 }

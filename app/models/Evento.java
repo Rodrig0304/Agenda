@@ -1,17 +1,42 @@
 package models;
 
+import io.ebean.Model;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Evento {
+@Entity
+@Table(name = "eventos")
+public class Evento extends Model {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(nullable = false, length = 200)
     private String titulo;
+    
+    @Column(length = 1000)
     private String descripcion;
+    
+    @Column(nullable = false, length = 10)
     private String fecha;
+    
+    @Column(length = 5)
     private String hora;
     
-    // Nuevas relaciones
+    // Relación con Categoria
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id")
     private Categoria categoria;
+    
+    // Relación muchos a muchos con Contacto (participantes)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "evento_participantes",
+        joinColumns = @JoinColumn(name = "evento_id"),
+        inverseJoinColumns = @JoinColumn(name = "contacto_id")
+    )
     private List<Contacto> participantes;
 
     public Evento() {
@@ -89,7 +114,9 @@ public class Evento {
         if (this.participantes == null) {
             this.participantes = new ArrayList<>();
         }
-        this.participantes.add(contacto);
+        if (!this.participantes.contains(contacto)) {
+            this.participantes.add(contacto);
+        }
     }
 
     public void removerParticipante(Contacto contacto) {

@@ -5,7 +5,8 @@ import play.libs.Json;
 import models.Evento;
 import models.Categoria;
 import models.Contacto;
-import services.AgendaService;
+import services.DatabaseService;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +14,10 @@ import java.util.Map;
 
 public class EventoController extends Controller {
 
+
+
     public Result listarEventos() {
-        List<Evento> eventos = AgendaService.obtenerTodosLosEventos();
+        List<Evento> eventos = DatabaseService.obtenerTodosLosEventos();
         return ok(Json.toJson(eventos));
     }
 
@@ -27,15 +30,15 @@ public class EventoController extends Controller {
             categoriaId = request.body().asJson().get("categoriaId").asLong();
         }
         
-        Evento nuevoEvento = AgendaService.crearEvento(evento.getTitulo(), evento.getDescripcion(), 
+        Evento nuevoEvento = DatabaseService.crearEvento(evento.getTitulo(), evento.getDescripcion(), 
                                                      evento.getFecha(), evento.getHora(), categoriaId);
         return created(Json.toJson(nuevoEvento));
     }
 
     public Result vistaEventos() {
-        List<Evento> eventos = AgendaService.obtenerTodosLosEventos();
-        List<Categoria> categorias = AgendaService.obtenerTodasLasCategorias();
-        List<Contacto> contactos = AgendaService.obtenerTodosLosContactos();
+        List<Evento> eventos = DatabaseService.obtenerTodosLosEventos();
+        List<Categoria> categorias = DatabaseService.obtenerTodasLasCategorias();
+        List<Contacto> contactos = DatabaseService.obtenerTodosLosContactos();
         return ok(views.html.eventos.render(eventos, categorias, contactos));
     }
 
@@ -59,7 +62,7 @@ public class EventoController extends Controller {
             
             if (titulo != null && !titulo.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty() &&
                 fecha != null && !fecha.trim().isEmpty() && hora != null && !hora.trim().isEmpty()) {
-                AgendaService.crearEvento(titulo, descripcion, fecha, hora, categoriaId);
+                DatabaseService.crearEvento(titulo, descripcion, fecha, hora, categoriaId);
             }
         }
         return redirect("/vista/eventos");
@@ -72,7 +75,7 @@ public class EventoController extends Controller {
             String method = formData.get("_method")[0];
             if (method.equals("DELETE")) {
                 // Es una petición de borrado
-                AgendaService.eliminarEvento(id);
+                DatabaseService.eliminarEvento(id);
             } else if (method.equals("PUT")) {
                 // Es una petición de actualización
                 if (formData.get("titulo") != null && formData.get("descripcion") != null && 
@@ -93,7 +96,7 @@ public class EventoController extends Controller {
                     
                     if (titulo != null && !titulo.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty() &&
                         fecha != null && !fecha.trim().isEmpty() && hora != null && !hora.trim().isEmpty()) {
-                        AgendaService.actualizarEvento(id, titulo, descripcion, fecha, hora, categoriaId);
+                        DatabaseService.actualizarEvento(id, titulo, descripcion, fecha, hora, categoriaId);
                     }
                 }
             }
@@ -103,7 +106,7 @@ public class EventoController extends Controller {
 
     // Borrar evento por ID
     public Result borrarEvento(Long id) {
-        AgendaService.eliminarEvento(id);
+        DatabaseService.eliminarEvento(id);
         return redirect("/vista/eventos");
     }
 
@@ -128,7 +131,7 @@ public class EventoController extends Controller {
             
             if (titulo != null && !titulo.trim().isEmpty() && descripcion != null && !descripcion.trim().isEmpty() &&
                 fecha != null && !fecha.trim().isEmpty() && hora != null && !hora.trim().isEmpty()) {
-                AgendaService.actualizarEvento(id, titulo, descripcion, fecha, hora, categoriaId);
+                DatabaseService.actualizarEvento(id, titulo, descripcion, fecha, hora, categoriaId);
             }
         }
         return redirect("/vista/eventos");
@@ -136,17 +139,17 @@ public class EventoController extends Controller {
 
     // Nuevos métodos para relaciones
     public Result obtenerEventosPorCategoria(Long categoriaId) {
-        List<Evento> eventos = AgendaService.obtenerEventosPorCategoria(categoriaId);
+        List<Evento> eventos = DatabaseService.obtenerEventosPorCategoria(categoriaId);
         return ok(Json.toJson(eventos));
     }
 
     public Result obtenerEventosConParticipantes() {
-        List<Evento> eventos = AgendaService.obtenerEventosConParticipantes();
+        List<Evento> eventos = DatabaseService.obtenerEventosConParticipantes();
         return ok(Json.toJson(eventos));
     }
 
     public Result agregarParticipante(Long eventoId, Long contactoId) {
-        boolean resultado = AgendaService.agregarParticipanteAEvento(eventoId, contactoId);
+        boolean resultado = DatabaseService.agregarParticipanteAEvento(eventoId, contactoId);
         if (resultado) {
             return ok(Json.toJson("Participante agregado exitosamente"));
         } else {
@@ -155,7 +158,7 @@ public class EventoController extends Controller {
     }
 
     public Result removerParticipante(Long eventoId, Long contactoId) {
-        boolean resultado = AgendaService.removerParticipanteDeEvento(eventoId, contactoId);
+        boolean resultado = DatabaseService.removerParticipanteDeEvento(eventoId, contactoId);
         if (resultado) {
             return ok(Json.toJson("Participante removido exitosamente"));
         } else {
@@ -164,7 +167,7 @@ public class EventoController extends Controller {
     }
 
     public Result obtenerParticipantesDelEvento(Long eventoId) {
-        List<Contacto> participantes = AgendaService.obtenerParticipantesDelEvento(eventoId);
+        List<Contacto> participantes = DatabaseService.obtenerParticipantesDelEvento(eventoId);
         
         // Crear una lista de objetos simples para evitar referencias circulares
         List<Object> participantesSimples = new ArrayList<>();
@@ -182,7 +185,7 @@ public class EventoController extends Controller {
     // Método de debug para probar participantes
     public Result debugParticipantes(Long eventoId) {
         try {
-            Evento evento = AgendaService.obtenerEventoPorId(eventoId);
+            Evento evento = DatabaseService.obtenerEventoPorId(eventoId).orElse(null);
             if (evento == null) {
                 return badRequest(Json.toJson("Evento no encontrado"));
             }

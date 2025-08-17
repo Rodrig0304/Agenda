@@ -1,15 +1,30 @@
 package models;
 
+import io.ebean.Model;
+import io.ebean.annotation.DbJson;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Categoria {
+@Entity
+@Table(name = "categorias")
+public class Categoria extends Model {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(nullable = false, length = 100)
     private String nombre;
+    
+    @Column(length = 500)
     private String descripcion;
     
     // Relaciones inversas
+    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Contacto> contactos;
+    
+    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Evento> eventos;
 
     public Categoria() {
@@ -80,11 +95,15 @@ public class Categoria {
             this.contactos = new ArrayList<>();
         }
         this.contactos.add(contacto);
+        contacto.setCategoria(this);
     }
 
     public void removerContacto(Contacto contacto) {
         if (this.contactos != null) {
             this.contactos.remove(contacto);
+            if (contacto.getCategoria() == this) {
+                contacto.setCategoria(null);
+            }
         }
     }
 
@@ -93,11 +112,15 @@ public class Categoria {
             this.eventos = new ArrayList<>();
         }
         this.eventos.add(evento);
+        evento.setCategoria(this);
     }
 
     public void removerEvento(Evento evento) {
         if (this.eventos != null) {
             this.eventos.remove(evento);
+            if (evento.getCategoria() == this) {
+                evento.setCategoria(null);
+            }
         }
     }
 
